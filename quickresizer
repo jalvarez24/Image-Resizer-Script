@@ -1,0 +1,74 @@
+#!/bin/bash
+#
+# Jayro Alvarez
+# jayroalvarez@csu.fullerton.edu
+# CPSC 254-01
+
+# NOTE: quickresizer does not overwrite your existing images
+
+# The quickresizer shell script is used to downsize images with a width greater
+# than 1024 pixels. The resulting image will have a new width of 1024 pixels
+# and will maintain the same aspect ratio as the original image. To use script,
+# Graphics Magick package is required. New images are moved into new directory
+# called resizedPics.
+
+# function called when script detects no parameters entered by user
+function usage () {
+  echo "Usage:"
+  echo "  ${1} parameter1 parameter2  parameter3..."
+  echo
+  echo "  Include at least one parameter and the script will loop through"
+  echo "  each parameter, updating the aspect ratio of all images that are"
+  echo "  over 1024 pixels wide. Images over 1024 pixels in width will be"
+  echo "  downsized to 1024 pixels wide and maintain the same aspect ratio."
+}
+
+# function called on each image detected with a width greater than 1024 pixels
+function resize(){
+  # echo to screen the name of image modified.
+  echo ${1} has been modified and new file created.
+
+  # get just filename in case a path was given
+  FILEN=`basename ${1}`
+
+  # gm convert resizes image down to 1024 pixels wide and saves it
+  # to a new file with prefix "resized_<filename>"
+  # also puts it in new folder
+  gm convert -resize 1024 "${1}" resizedPics/"resized_${FILEN}"
+}
+
+# Main
+SCRIPTNAME=`basename ${0}`
+
+# call usage function if no parameters detected
+if [ ${#} -lt 1 ]; then
+  usage ${SCRIPTNAME}
+
+# else (parameters were detected)
+else
+
+# create new directory 'resizedPics' where we can place resized versions of
+# the original photos
+mkdir resizedPics
+
+# keeps track of total images resized
+COUNT=0
+
+# enter loop for every fed in parameter
+for PIC in ${*}; do
+  # create variable PIC_WIDTH to save width
+  # uses two cuts to get width of image with gm identify
+  PIC_WIDTH=`echo | gm identify "${PIC}" | cut -f 3 -d\ | cut -f 1 -dx`
+
+  # if PIC_WIDTH > 1024, we pass the file name to our resize function
+  if [ "${PIC_WIDTH}" -gt 1024 ]; then
+    # increment COUNT variable by 1
+    COUNT=$((COUNT+1))
+    #call current PIC with the resize function
+    resize "${PIC}"
+  fi
+done
+
+echo "Total images downsized: " ${COUNT}
+
+fi
